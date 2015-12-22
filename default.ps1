@@ -6,10 +6,10 @@ properties {
 	$sln_file = "$src_directory\IdentityModel.sln"
 	$target_config = "Release"
 	$framework_version = "v4.5"
-	$nuget_path = "$src_directory\.nuget\nuget.exe"
+	$nuget_path = "$base_directory\nuget.exe"
 
 	$buildNumber = 0;
-	$version = "1.0.0.0"
+	$version = "1.3.0.0"
 	$preRelease = $null
 }
 
@@ -57,7 +57,7 @@ task CreateNuGetPackage -depends Compile {
 	if($preRelease){
 		$packageVersion = "$packageVersion-$preRelease"
 	}
-	
+
 	if ($buildNumber -ne 0){
 		$packageVersion = $packageVersion + "-build" + $buildNumber.ToString().PadLeft(5,'0')
 	}
@@ -65,14 +65,14 @@ task CreateNuGetPackage -depends Compile {
 	new-item $dist_directory -type directory
 
 	copy-item $src_directory\IdentityModel.nuspec $dist_directory
-	
+
 	new-item $dist_directory\lib\net45 -type directory
 	copy-item $output_directory\net45\IdentityModel.Net45.dll $dist_directory\lib\net45\
 	copy-item $output_directory\net45\IdentityModel.Net45.pdb $dist_directory\lib\net45\
-	
-	new-item $dist_directory\lib\portable-net45+win8+wpa81 -type directory
-	copy-item $output_directory\portable\IdentityModel.Portable.dll $dist_directory\lib\portable-net45+win8+wpa81\
-	copy-item $output_directory\portable\IdentityModel.Portable.pdb $dist_directory\lib\portable-net45+win8+wpa81\
-	
+
+	new-item $dist_directory\lib\portable-net45+wp80+win8+wpa81 -type directory
+	copy-item $output_directory\portable\IdentityModel.Portable.dll $dist_directory\lib\portable-net45+wp80+win8+wpa81\
+	copy-item $output_directory\portable\IdentityModel.Portable.pdb $dist_directory\lib\portable-net45+wp80+win8+wpa81\
+
 	exec { . $nuget_path pack $dist_directory\IdentityModel.nuspec -BasePath $dist_directory -o $dist_directory -version $packageVersion }
 }

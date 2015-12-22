@@ -17,6 +17,8 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace IdentityModel.Client
@@ -29,7 +31,7 @@ namespace IdentityModel.Client
             : this(endpoint, token, new HttpClientHandler())
         { }
 
-        public UserInfoClient(Uri endpoint, string token, HttpClientHandler innerHttpClientHandler)
+        public UserInfoClient(Uri endpoint, string token, HttpMessageHandler innerHttpMessageHandler)
         {
             if (endpoint == null)
                 throw new ArgumentNullException("endpoint");
@@ -37,13 +39,17 @@ namespace IdentityModel.Client
             if (string.IsNullOrEmpty(token))
                 throw new ArgumentNullException("token");
 
-            if (innerHttpClientHandler == null)
-                throw new ArgumentNullException("innerHttpClientHandler");
+            if (innerHttpMessageHandler == null)
+                throw new ArgumentNullException("innerHttpMessageHandler");
 
-            _client = new HttpClient(innerHttpClientHandler)
+            _client = new HttpClient(innerHttpMessageHandler)
             {
                 BaseAddress = endpoint
             };
+
+            _client.DefaultRequestHeaders.Accept.Clear();
+            _client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
 
             _client.SetBearerToken(token);
         }
@@ -56,14 +62,16 @@ namespace IdentityModel.Client
             }
         }
 
-        public async Task<UserInfoResponse> GetAsync()
+        public async Task<UserInfoResponse> GetAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            var response = await _client.GetAsync("");
+            var response = await _client.GetAsync("", cancellationToken).ConfigureAwait(false);
 
             if (response.StatusCode != HttpStatusCode.OK)
+            {
                 return new UserInfoResponse(response.StatusCode, response.ReasonPhrase);
+            }
 
-            var content = await response.Content.ReadAsStringAsync();
+            var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             return new UserInfoResponse(content);
         }
     }
